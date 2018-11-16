@@ -84,7 +84,7 @@ $holdeplasser_javascript_map .= "\n]";
 </form>
 </header>
 <section id="monitor">
-<iframe src="<?= $monurl ?>" ></iframe>
+<iframe id="ruterMonitor" src="<?= $monurl ?>" ></iframe>
 </section>
 
 
@@ -109,34 +109,27 @@ var ruterApp = function() {
 
     let app = {
         
+        init : function() {
+            app.scanChecboxesOnLoad();
+            app.regEventHandlers();
+        },
+
         scanChecboxesOnLoad : function() {
+
             let selectedHoldeplasser = window.sessionStorage.getItem('holdeplasser');
 
-            /*
-            if (selectedHoldeplasser != null && selectedHoldeplasser.length > 0) {
-                //Clear and restore html
-                let boxes = document.getElementsByTagName('input');
-                for(box of boxes) {
-                    if (box.value in selectedHoldeplasser) {
-                        box.checked = true;
-                    } else {
-                        box.checked = false;
-                    }
-                }
-            } else {
-                //load default
-                selectedHoldeplasser = default_holdeplasser;
-                
-            }
-            */
             if (selectedHoldeplasser == null) {
                 selectedHoldeplasser = default_holdeplasser;
+            } else {
+                selectedHoldeplasser = selectedHoldeplasser.split(',');
             }
 
+        
             let boxes = document.getElementsByTagName('input');
             for(box of boxes) {
                 console.log(box);
-                if (selectedHoldeplasser.includes(box.value)) {
+        
+                if (box.value in selectedHoldeplasser) {
                     box.checked = true;
                 } else {
                     box.checked = false;
@@ -150,11 +143,46 @@ var ruterApp = function() {
         },
 
 
-        checkboxChange : function() {
+        checkboxChange : function(event) {
             //selected, and if selecting 3 checkboxes clear oldest (rotate/unshift array)
 
+            let selectedHoldeplasser = window.sessionStorage.getItem('holdeplasser').split(',');
 
+            console.log(selectedHoldeplasser);
 
+            console.log(event);
+
+            console.log(event.target);
+
+            debugger;
+            let value = event.target.value;
+
+            let selected = event.target.selected;
+
+            if (selected) {
+                //Can not have more than 2 
+                if (selectedHoldeplasser.length > 1) {
+                    selectedHoldeplasser.shift();
+                }
+                
+                selectedHoldeplasser.push(value);
+
+            } else {
+                selectedHoldeplasser = selectedHoldeplasser.filter(item => item !== value);
+                
+            }
+
+            window.sessionStorage.setItem('holdeplasser', selectedHoldeplasser);
+
+            
+
+        },
+
+        regEventHandlers : function() {
+            let boxes = document.getElementsByTagName('input');
+            for(box of boxes) {
+                box.addEventListener('change', this.checkboxChange);
+            }
         }
 
     }
@@ -165,7 +193,8 @@ var ruterApp = function() {
    
 
 
-window.addEventListener('load', ruterApp.scanChecboxesOnLoad());
+window.addEventListener('load', ruterApp.init);
+
 
 
 
