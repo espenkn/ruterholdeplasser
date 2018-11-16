@@ -10,11 +10,7 @@ $holdeplasser = [
 ];
 
 
-$monurl = 'https://mon.ruter.no/monitor/';
-
 $monurl = 'https://mon.ruter.no/monitor/3010533/Sofienberg%20(i%20Trondheimsvn)%20(Oslo)/3011400/Carl%20Berners%20plass%20[T-bane]%20(Oslo)/';
-
-
 
 ?>
 
@@ -63,15 +59,11 @@ $holdeplasser_javascript_map = "[\n";
 
 foreach ($holdeplasser as $key => $value) {
 
-    $safe_val = urlencode($value);
-
-    $holdeplasser_javascript_map .= "[ $key, '$safe_val' ],\n";
-
-    //$checked = (in_array($key, $default) ? 'checked' : '');
+    $holdeplasser_javascript_map .= "[ '$key', '$value' ],\n";
 
     echo '
     <label>
-        <input type="checkbox" name="holdeplass[]" value="',$key,'" ',$checked,'/>
+        <input type="checkbox" name="holdeplass[]" value="',$key,'" />
         ',$value,'
     </label> ';
 }
@@ -99,12 +91,11 @@ window.sessionStorage.removeItem('key');
 
 var ruterApp = function() {
 
+    let monurl = 'https://mon.ruter.no/monitor/';
+
     let holdeplaser = new Map(<?= $holdeplasser_javascript_map ?>);
 
-
-    holdeplaser.forEach((v, k) => console.log(k));
-
-    let default_holdeplasser = [3010533, 3011400];
+    let default_holdeplasser = ['3010533', '3011400'];
 
 
     let app = {
@@ -123,20 +114,16 @@ var ruterApp = function() {
             } else {
                 selectedHoldeplasser = selectedHoldeplasser.split(',');
             }
-
         
             let boxes = document.getElementsByTagName('input');
             for(box of boxes) {
-                console.log(box);
-        
-                if (box.value in selectedHoldeplasser) {
+
+                if (selectedHoldeplasser.includes(box.value)) {
                     box.checked = true;
                 } else {
                     box.checked = false;
                 }
             }
-
-            
 
             //Save state
             window.sessionStorage.setItem('holdeplasser', selectedHoldeplasser);
@@ -148,24 +135,27 @@ var ruterApp = function() {
 
             let selectedHoldeplasser = window.sessionStorage.getItem('holdeplasser').split(',');
 
-            console.log(selectedHoldeplasser);
-
-            console.log(event);
-
-            console.log(event.target);
-
-            debugger;
             let value = event.target.value;
+            let checked = event.target.checked;
 
-            let selected = event.target.selected;
-
-            if (selected) {
+            if (checked) {
                 //Can not have more than 2 
                 if (selectedHoldeplasser.length > 1) {
-                    selectedHoldeplasser.shift();
+                    let uncheckThis = selectedHoldeplasser.shift();
                 }
                 
                 selectedHoldeplasser.push(value);
+
+                let checks = document.getElementsByTagName('input');
+
+                for(check of checks) {
+                    if (selectedHoldeplasser.includes(check.value)) {
+                        check.checked = true;
+                    } else {
+                        check.checked = false;   
+                    }
+
+                }
 
             } else {
                 selectedHoldeplasser = selectedHoldeplasser.filter(item => item !== value);
@@ -174,8 +164,15 @@ var ruterApp = function() {
 
             window.sessionStorage.setItem('holdeplasser', selectedHoldeplasser);
 
-            
+            //Set new url
+            let appframe = document.getElementById('ruterMonitor');
 
+            let appstr = '';
+            for(h in selectedHoldeplasser) {
+                appstr += selectedHoldeplasser[h] + '/' + holdeplaser.get(selectedHoldeplasser[h]) + '/';
+            }
+
+            appframe.src = monurl + appstr;
         },
 
         regEventHandlers : function() {
