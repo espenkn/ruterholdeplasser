@@ -1,5 +1,9 @@
 <?php
 
+header('Location: ' . 'https://tavla.en-tur.no/dashboard/@59-926348,10-776113/eyJkaXN0YW5jZSI6IjU1OCIsImhpZGRlblN0YXRpb25zIjpbXSwiaGlkZGVuU3RvcHMiOlsiTlNSOlN0b3BQbGFjZTo2NDUxIiwiTlNSOlN0b3BQbGFjZTo1ODE2MiIsIk5TUjpTdG9wUGxhY2U6NTgyNTUiLCJOU1I6U3RvcFBsYWNlOjY0NTMiXSwiaGlkZGVuUm91dGVzIjpbXSwiaGlkZGVuTW9kZXMiOltdLCJuZXdTdGF0aW9ucyI6W10sIm5ld1N0b3BzIjpbXX0=');
+
+exit();
+
 
 $holdeplasser = [
     3010533 => 'Sofienberg (i Trondheimsvn)',
@@ -76,7 +80,7 @@ $holdeplasser_javascript_map .= "\n]";
 </form>
 </header>
 <section id="monitor">
-<iframe id="ruterMonitor" src="<?= $monurl ?>" ></iframe>
+<iframe id="ruterMonitor" src="<?= $monurl ?>" onload="if(this.readyState !== 'loading'){console.log(this.contentWindow); alert('test')}" ></iframe>
 </section>
 
 
@@ -99,15 +103,19 @@ var ruterApp = function() {
 
 
     let app = {
-        
+
         init : function() {
             app.scanChecboxesOnLoad();
             app.regEventHandlers();
         },
 
+        iframe_loaded : function() {
+            alert('iframe_ready');
+        },
+
         scanChecboxesOnLoad : function() {
 
-            let selectedHoldeplasser = window.sessionStorage.getItem('holdeplasser');
+            let selectedHoldeplasser = window.localStorage.getItem('holdeplasser');
 
             if (selectedHoldeplasser == null) {
                 selectedHoldeplasser = default_holdeplasser;
@@ -126,14 +134,17 @@ var ruterApp = function() {
             }
 
             //Save state
-            window.sessionStorage.setItem('holdeplasser', selectedHoldeplasser);
+            window.localStorage.setItem('holdeplasser', selectedHoldeplasser);
+
+
+            this.checkboxChange();
         },
 
 
         checkboxChange : function(event) {
             //selected, and if selecting 3 checkboxes clear oldest (rotate/unshift array)
 
-            let selectedHoldeplasser = window.sessionStorage.getItem('holdeplasser').split(',');
+            let selectedHoldeplasser = window.localStorage.getItem('holdeplasser').split(',');
 
             let value = event.target.value;
             let checked = event.target.checked;
@@ -162,7 +173,7 @@ var ruterApp = function() {
                 
             }
 
-            window.sessionStorage.setItem('holdeplasser', selectedHoldeplasser);
+            window.localStorage.setItem('holdeplasser', selectedHoldeplasser);
 
             //Set new url
             let appframe = document.getElementById('ruterMonitor');
@@ -180,6 +191,30 @@ var ruterApp = function() {
             for(box of boxes) {
                 box.addEventListener('change', this.checkboxChange);
             }
+        },
+
+        ready : function() {
+
+            function loaded()
+            {
+                if (this.iframe_loaded === true)
+                {
+                    resolve();
+                    return true;
+                }
+                return false;
+            }
+            let result = new Promise(function(resolve, reject){
+                if (!loaded()){
+                    window.setInterval(() => {
+                       loaded(); 
+                    }, interval);
+                }
+
+
+            });
+
+            return result;
         }
 
     }
@@ -191,7 +226,6 @@ var ruterApp = function() {
 
 
 window.addEventListener('load', ruterApp.init);
-
 
 
 
